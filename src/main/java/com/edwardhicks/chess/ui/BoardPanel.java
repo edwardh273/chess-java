@@ -4,7 +4,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 
+import com.edwardhicks.chess.Square;
 import static com.edwardhicks.chess.Constants.*;
 import static com.edwardhicks.chess.ui.ImageLoader.getPieceImage;
 
@@ -12,6 +14,9 @@ public class BoardPanel extends JPanel {
 
     // A 2D array to store the chess board pieces
     private String[][] board;
+    private ArrayList<Square> playerClicks = new ArrayList<>();
+    private Square sqSelected = null;
+
 
     // Constructor, runs when I crate a new BoardPanel
     public BoardPanel() {
@@ -23,7 +28,29 @@ public class BoardPanel extends JPanel {
             public void mousePressed(MouseEvent e) {
                 int col = e.getX() / SQ_SIZE;
                 int row = e.getY() / SQ_SIZE;
-                handleSquareClick(col, row);
+
+                System.out.println("Clicked: " + col + ", " + row);
+                // piece selected
+                String pieceSelected = board[row][col];
+                Square sqSelected = new Square(col, row);
+
+                if (playerClicks.size() == 1 && playerClicks.get(0).getCol() == col && playerClicks.get(0).getRow() == row) {
+                    // Deselect logic
+                    System.out.println("same sq collected, clicks cleared");
+                    playerClicks.clear();
+                } else{
+                    playerClicks.add(sqSelected);
+                }
+
+
+                if (playerClicks.size() == 2) {
+                    System.out.println("Move attempt: " + playerClicks.get(0) + " -> " + playerClicks.get(1));
+                    makeMove(playerClicks.get(0), playerClicks.get(1));
+                    playerClicks.clear();
+                    repaint();
+                }
+
+
             }
         });
     }
@@ -58,10 +85,6 @@ public class BoardPanel extends JPanel {
         }
     }
 
-    private void handleSquareClick(int col, int row) {
-        System.out.println("Clicked: " + col + ", " + row);
-    }
-
 
     private void initializeBoard() {
         board = new String[][] {
@@ -74,5 +97,12 @@ public class BoardPanel extends JPanel {
                 {"wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"},
                 {"wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"}
         };
+    }
+
+
+    private void makeMove(Square startSq, Square endSq) {
+        String pieceMoved = this.board[startSq.getRow()][startSq.getCol()];
+        this.board[startSq.getRow()][startSq.getCol()] = "--";
+        this.board[endSq.getRow()][endSq.getCol()] = pieceMoved;
     }
 }
