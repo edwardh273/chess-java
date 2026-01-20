@@ -2,6 +2,8 @@ package com.edwardhicks.chess.ui;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 import static com.edwardhicks.chess.Constants.*;
 import static com.edwardhicks.chess.ui.ImageLoader.getPieceImage;
@@ -15,6 +17,15 @@ public class BoardPanel extends JPanel {
     public BoardPanel() {
         setPreferredSize(new Dimension(BOARD_LENGTH, BOARD_LENGTH));
         initializeBoard();
+
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                int col = e.getX() / SQ_SIZE;
+                int row = e.getY() / SQ_SIZE;
+                handleSquareClick(col, row);
+            }
+        });
     }
 
     @Override  // replaces JPanel's default paintComponent
@@ -45,6 +56,10 @@ public class BoardPanel extends JPanel {
 
             }
         }
+    }
+
+    private void handleSquareClick(int col, int row) {
+        System.out.println("Clicked: " + col + ", " + row);
     }
 
 
