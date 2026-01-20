@@ -13,6 +13,6 @@ public class Constants {
 
     // Set square colors
     public static final Color LIGHT_SQUARE = new Color(240, 240, 240);
-    public static final Color DARK_SQUARE = new Color(60, 60, 60);
+    public static final Color DARK_SQUARE = new Color(100, 100, 100);
 
 }
