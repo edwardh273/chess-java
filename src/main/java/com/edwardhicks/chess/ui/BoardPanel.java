@@ -6,22 +6,26 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
+import com.edwardhicks.chess.Move;
 import com.edwardhicks.chess.Square;
+import com.edwardhicks.chess.GameState;
+
 import static com.edwardhicks.chess.Constants.*;
 import static com.edwardhicks.chess.ui.ImageLoader.getPieceImage;
 
 public class BoardPanel extends JPanel {
 
-    // A 2D array to store the chess board pieces
-    private String[][] board;
-    private ArrayList<Square> playerClicks = new ArrayList<>();
-    private Square sqSelected = null;
+    private final GameState gameState;
+
+    // TODO: should the below be a fixed Array?
+    private final ArrayList<Square> playerClicks = new ArrayList<>();
+
 
 
     // Constructor, runs when I crate a new BoardPanel
-    public BoardPanel() {
+    public BoardPanel(GameState gs) {
+        this.gameState = gs;
         setPreferredSize(new Dimension(BOARD_LENGTH, BOARD_LENGTH));
-        initializeBoard();
 
         addMouseListener(new MouseAdapter() {
             @Override
@@ -31,10 +35,9 @@ public class BoardPanel extends JPanel {
 
                 System.out.println("Clicked: " + col + ", " + row);
                 // piece selected
-                String pieceSelected = board[row][col];
                 Square sqSelected = new Square(col, row);
 
-                if (playerClicks.size() == 1 && playerClicks.get(0).getCol() == col && playerClicks.get(0).getRow() == row) {
+                if (playerClicks.size() == 1 && playerClicks.get(0).col() == col && playerClicks.get(0).row() == row) {
                     // Deselect logic
                     System.out.println("same sq collected, clicks cleared");
                     playerClicks.clear();
@@ -42,16 +45,18 @@ public class BoardPanel extends JPanel {
                     playerClicks.add(sqSelected);
                 }
 
-
                 if (playerClicks.size() == 2) {
-                    System.out.println("Move attempt: " + playerClicks.get(0) + " -> " + playerClicks.get(1));
-                    makeMove(playerClicks.get(0), playerClicks.get(1));
+                    // attempt a move by passing move to GameState
+                    Square start = playerClicks.get(0);
+                    Square end = playerClicks.get(1);
+
+                    Move move = new Move(start, end, gameState.getBoard());
+                    gameState.makeMove(move);
+
                     playerClicks.clear();
                     repaint();
+                    }
                 }
-
-
-            }
         });
     }
 
@@ -73,9 +78,10 @@ public class BoardPanel extends JPanel {
     }
 
     private void drawPieces(Graphics g) {
+        String[][] currentBoard = gameState.getBoard();
         for (int r = 0; r < DIMENSION; r++) {
             for (int c = 0; c < DIMENSION; c++) {
-                String piece = board[r][c];
+                String piece = currentBoard[r][c];
                 if (!piece.equals("--")) {
                     Image pieceImage = getPieceImage(piece);
                     g.drawImage(pieceImage, c * SQ_SIZE, r * SQ_SIZE, null);
@@ -83,26 +89,5 @@ public class BoardPanel extends JPanel {
 
             }
         }
-    }
-
-
-    private void initializeBoard() {
-        board = new String[][] {
-                {"bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"},
-                {"bp", "bp", "bp", "bp", "bp", "bp", "bp", "bp"},
-                {"--", "--", "--", "--", "--", "--", "--", "--"},
-                {"--", "--", "--", "--", "--", "--", "--", "--"},
-                {"--", "--", "--", "--", "--", "--", "--", "--"},
-                {"--", "--", "--", "--", "--", "--", "--", "--"},
-                {"wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"},
-                {"wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"}
-        };
-    }
-
-
-    private void makeMove(Square startSq, Square endSq) {
-        String pieceMoved = this.board[startSq.getRow()][startSq.getCol()];
-        this.board[startSq.getRow()][startSq.getCol()] = "--";
-        this.board[endSq.getRow()][endSq.getCol()] = pieceMoved;
     }
 }

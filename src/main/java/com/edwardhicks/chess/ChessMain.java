@@ -11,17 +11,17 @@ public class ChessMain extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setResizable(false);
 
-        // Add chess board panel
-        BoardPanel boardPanel = new BoardPanel();
+        // Initialize GameState and add board to window
+        GameState gameState = new GameState();
+        BoardPanel boardPanel = new BoardPanel(gameState);
         add(boardPanel);
 
         pack();
-
         setLocationRelativeTo(null);
         setVisible(true);  // Triggers first paintComponent() call
     }
 
     static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new ChessMain());
+        SwingUtilities.invokeLater(ChessMain::new);
     }
 }
