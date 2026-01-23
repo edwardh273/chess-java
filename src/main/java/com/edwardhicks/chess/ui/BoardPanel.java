@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import com.edwardhicks.chess.Move;
 import com.edwardhicks.chess.Square;
 import com.edwardhicks.chess.GameState;
+import com.edwardhicks.chess.GameState.*;
 
 import static com.edwardhicks.chess.Constants.*;
 import static com.edwardhicks.chess.ui.ImageLoader.getPieceImage;
@@ -19,6 +20,7 @@ public class BoardPanel extends JPanel {
 
     // TODO: should the below be a fixed Array?
     private final ArrayList<Square> playerClicks = new ArrayList<>();
+    private ArrayList<Move> validMoves = new ArrayList<>();
 
 
 
@@ -26,6 +28,8 @@ public class BoardPanel extends JPanel {
     public BoardPanel(GameState gs) {
         this.gameState = gs;
         setPreferredSize(new Dimension(BOARD_LENGTH, BOARD_LENGTH));
+
+        validMoves = gameState.getValidMoves();
 
         addMouseListener(new MouseAdapter() {
             @Override
@@ -50,8 +54,15 @@ public class BoardPanel extends JPanel {
                     Square start = playerClicks.get(0);
                     Square end = playerClicks.get(1);
 
-                    Move move = new Move(start, end, gameState.getBoard());
-                    gameState.makeMove(move);
+                    Move moveAttempt = new Move(start, end, gameState.getBoard());
+
+                    for (Move move : validMoves) {
+                        if (moveAttempt.equals(move)) {
+                            gameState.makeMove(move);
+                            validMoves = gameState.getValidMoves();
+                            break;
+                        }
+                    }
 
                     playerClicks.clear();
                     repaint();
