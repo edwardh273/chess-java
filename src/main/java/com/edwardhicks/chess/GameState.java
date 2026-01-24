@@ -7,6 +7,8 @@ public class GameState {
     private final String[][] board;
     private boolean whiteToMove;
     private final List<Move> moveLog;
+    private Square whiteKingLocation;
+    private Square blackKingLocation;
 
     public GameState() {
 
@@ -22,6 +24,9 @@ public class GameState {
             {"wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"}
         };
         this.whiteToMove = true;
+        this.whiteKingLocation = new Square(4, 7);  // (col, row)
+        this.blackKingLocation = new Square(4, 0);  // (col, row)
+
         this.moveLog = new ArrayList<>();
     }
 
@@ -71,10 +76,14 @@ public class GameState {
 
                 if ((color == 'w' && whiteToMove) || (color == 'b' && !whiteToMove)) {
                     char pieceType = piece.charAt(1);
-                    if (pieceType == 'p') {
-                        getPawnMoves(r, c, moves);
+                    switch (pieceType) {
+                        case 'p' -> getPawnMoves(r, c, moves);
+                        case 'R' -> getRookMoves(r, c, moves);
+                        case 'N' -> getKnightMoves(r, c, moves);
+                        case 'B' -> getBishopMoves(r, c, moves);
+                        case 'Q' -> getQueenMoves(r, c, moves);
+                        case 'K' -> getKingMoves(r, c, moves);
                     }
-                    // Add other piece types here later
                 }
             }
         }
@@ -114,6 +123,118 @@ public class GameState {
             }
         }
     }
+
+    /**
+ * Get all Rook moves for the Rook located at row, col and add these moves to the list
+ */
+public void getRookMoves(int r, int c, List<Move> moves) {
+    char enemyColor = whiteToMove ? 'b' : 'w';
+    int[][] directions = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}}; // left, right, up, down
+
+    for (int[] d : directions) {
+        for (int i = 1; i < 8; i++) {
+            int endRow = r + d[0] * i;
+            int endCol = c + d[1] * i;
+
+            if (endRow >= 0 && endRow < 8 && endCol >= 0 && endCol < 8) { // confine to board
+                String endPiece = board[endRow][endCol];
+
+                if (endPiece.equals("--")) { // if blank, append move
+                    moves.add(new Move(new Square(c, r), new Square(endCol, endRow), board));
+                } else if (endPiece.charAt(0) == enemyColor) { // hits enemy piece
+                    moves.add(new Move(new Square(c, r), new Square(endCol, endRow), board));
+                    break;
+                } else { // hits own color piece
+                    break;
+                }
+            } else { // off board
+                break;
+            }
+        }
+    }
+}
+
+/**
+ * Get all Bishop moves for the Bishop located at row, col and add these moves to the list
+ */
+public void getBishopMoves(int r, int c, List<Move> moves) {
+    char enemyColor = whiteToMove ? 'b' : 'w';
+    int[][] directions = {{-1, -1}, {-1, 1}, {1, -1}, {1, 1}}; // leftup, rightup, leftdown, rightdown
+
+    for (int[] d : directions) {
+        for (int i = 1; i < 8; i++) {
+            int endRow = r + d[0] * i;
+            int endCol = c + d[1] * i;
+
+            if (endRow >= 0 && endRow < 8 && endCol >= 0 && endCol < 8) { // confine to board
+                String endPiece = board[endRow][endCol];
+
+                if (endPiece.equals("--")) { // if blank, append move
+                    moves.add(new Move(new Square(c, r), new Square(endCol, endRow), board));
+                } else if (endPiece.charAt(0) == enemyColor) { // hits enemy piece
+                    moves.add(new Move(new Square(c, r), new Square(endCol, endRow), board));
+                    break;
+                } else { // hits own color piece
+                    break;
+                }
+            } else { // off board
+                break;
+            }
+        }
+    }
+}
+
+/**
+ * Get all Queen moves for the Queen located at row, col and add these moves to the list
+ */
+public void getQueenMoves(int r, int c, List<Move> moves) {
+    getBishopMoves(r, c, moves);
+    getRookMoves(r, c, moves);
+}
+
+/**
+ * Get all Knight moves for the Knight located at row, col and add these moves to the list
+ */
+public void getKnightMoves(int r, int c, List<Move> moves) {
+    int[][] potentialMoves = {{-1, -2}, {-2, -1}, {-2, 1}, {-1, 2},
+                               {1, 2}, {2, 1}, {2, -1}, {1, -2}};
+    char allyColor = whiteToMove ? 'w' : 'b';
+
+    for (int[] m : potentialMoves) {
+        int endRow = r + m[0];
+        int endCol = c + m[1];
+
+        if (endRow >= 0 && endRow < 8 && endCol >= 0 && endCol < 8) { // confine to board
+            String endPiece = board[endRow][endCol];
+
+            if (endPiece.charAt(0) != allyColor) {
+                moves.add(new Move(new Square(c, r), new Square(endCol, endRow), board));
+            }
+        }
+    }
+}
+
+/**
+ * Get all King moves for the King located at row, col and add these moves to the list
+ */
+public void getKingMoves(int r, int c, List<Move> moves) {
+    int[][] potentialMoves = {{-1, -1}, {-1, 0}, {-1, 1}, {0, 1},
+                               {1, 1}, {1, 0}, {1, -1}, {0, -1}};
+    char allyColor = whiteToMove ? 'w' : 'b';
+
+    for (int[] m : potentialMoves) {
+        int endRow = r + m[0];
+        int endCol = c + m[1];
+
+        if (endRow >= 0 && endRow < 8 && endCol >= 0 && endCol < 8) { // confine to board
+            String endPiece = board[endRow][endCol];
+
+            if (endPiece.charAt(0) != allyColor) {
+                moves.add(new Move(new Square(c, r), new Square(endCol, endRow), board));
+            }
+        }
+    }
+}
 
     public String[][] getBoard() {
         return board;
