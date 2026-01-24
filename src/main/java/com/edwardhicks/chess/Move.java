@@ -17,6 +17,10 @@ public record Move(Square start, Square end, String pieceMoved, String pieceCapt
                end.col() * 10 + end.row();
     }
 
+    public boolean isPawnPromotion() {
+        return this.pieceMoved.equals("wp") && this.end.row() == 0 || this.pieceMoved.equals("bp") && this.end.row() == 7;
+    }
+
 
     /**
      * Overriding equals is crucial so that validMoves.contains(userMove)

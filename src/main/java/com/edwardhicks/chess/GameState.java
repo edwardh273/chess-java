@@ -33,6 +33,10 @@ public class GameState {
         board[move.start().row()][move.start().col()] = "--";
         board[move.end().row()][move.end().col()] = move.pieceMoved();
 
+        if (move.isPawnPromotion()) {
+            board[move.end().row()][move.end().col()] = "" + move.pieceMoved().charAt(0) + 'Q';
+        }
+
         moveLog.add(move);
         whiteToMove = !whiteToMove; // Swap turns
 
