@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import com.edwardhicks.chess.Move;
 import com.edwardhicks.chess.Square;
 import com.edwardhicks.chess.GameState;
-import com.edwardhicks.chess.GameState.*;
 
 import static com.edwardhicks.chess.Constants.*;
 import static com.edwardhicks.chess.ui.ImageLoader.getPieceImage;
@@ -45,8 +44,10 @@ public class BoardPanel extends JPanel {
                     // Deselect logic
                     System.out.println("same sq collected, clicks cleared");
                     playerClicks.clear();
+                    repaint();
                 } else{
                     playerClicks.add(sqSelected);
+                    repaint();
                 }
 
                 if (playerClicks.size() == 2) {
@@ -76,6 +77,10 @@ public class BoardPanel extends JPanel {
         super.paintComponent(g);
         drawBoard(g);
         drawPieces(g);
+
+        if (!playerClicks.isEmpty()) {
+            highlightSquares(g, gameState, validMoves, playerClicks.getFirst());
+        }
     }
 
     private void drawBoard(Graphics g) {
@@ -98,6 +103,38 @@ public class BoardPanel extends JPanel {
                     g.drawImage(pieceImage, c * SQ_SIZE, r * SQ_SIZE, null);
                 }
 
+            }
+        }
+    }
+
+    /**
+     * Highlight square selected and available moves.
+     */
+    public void highlightSquares(Graphics g, GameState gs, ArrayList<Move> validMoves, Square sqSelected) {
+        if (sqSelected != null) {
+            int c = sqSelected.col();
+            int r = sqSelected.row();
+
+            String piece = gs.getBoard()[r][c];
+            char pieceColor = piece.charAt(0);
+            char currentPlayerColor = gs.whiteToMove ? 'w' : 'b';
+
+            // Square selected is a piece of the player whose turn it is
+            if (pieceColor == currentPlayerColor) {
+                Graphics2D g2d = (Graphics2D) g;
+
+                // Highlight selected square in blue with transparency
+                g2d.setColor(BLUE_TRANSPARENT);
+                g2d.fillRect(c * SQ_SIZE, r * SQ_SIZE, SQ_SIZE, SQ_SIZE);
+
+                // Highlight valid moves from that square in yellow with transparency
+                g2d.setColor(YELLOW_TRANSPARENT);
+
+                for (Move move : validMoves) {
+                    if (move.start().row() == r && move.start().col() == c) {
+                        g2d.fillRect(SQ_SIZE * move.end().col(), SQ_SIZE * move.end().row(), SQ_SIZE, SQ_SIZE);
+                    }
+                }
             }
         }
     }
