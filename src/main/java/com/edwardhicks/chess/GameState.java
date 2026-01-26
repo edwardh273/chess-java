@@ -117,7 +117,7 @@ public class GameState {
                 if (board[r - 1][c - 1].charAt(0) == 'b') { // Capturing left
                 moves.add(new Move(new Square(c, r), new Square(c - 1, r - 1), board));
                 }
-                else if (new Square(c - 1, r - 1).equals(this.enpassantPossible)) {  // Enpassant capture left
+                else if (new Square(c - 1, r - 1).equals(this.enpassantPossible)  && board[r][c-1].charAt(0) == 'b') {  // Enpassant capture left
                     System.out.printf("Adding en passant move: from (%d,%d) to (%d,%d)%n", c, r, c-1, r-1);
                     moves.add(new Move(new Square(c, r), new Square(c-1, r-1), board, true));
                 }
@@ -127,7 +127,7 @@ public class GameState {
                 if (board[r - 1][c + 1].charAt(0) == 'b') { // Capturing right
                     moves.add(new Move(new Square(c, r), new Square(c + 1, r - 1), board));
                 }
-                else if (new Square(c + 1, r - 1).equals(this.enpassantPossible)) {  // Enpassant capture right
+                else if (new Square(c + 1, r - 1).equals(this.enpassantPossible) && board[r][c+1].charAt(0) == 'b') {  // Enpassant capture right
                     System.out.printf("Adding en passant move: from (%d,%d) to (%d,%d)%n", c, r, c+1, r-1);
                     moves.add(new Move(new Square(c, r), new Square(c + 1, r - 1), board, true));
                 }
@@ -145,7 +145,7 @@ public class GameState {
                 if (board[r + 1][c - 1].charAt(0) == 'w') { // Capturing left
                 moves.add(new Move(new Square(c, r), new Square(c - 1, r + 1), board));
                 }
-                else if (new Square(c - 1, r + 1).equals(this.enpassantPossible)) {  // Enpassant capture left
+                else if (new Square(c - 1, r + 1).equals(this.enpassantPossible) && board[r][c-1].charAt(0) == 'w') {  // Enpassant capture left
                     System.out.printf("Adding en passant move: from (%d,%d) to (%d,%d)%n", c, r, c-1, r+1);
                     moves.add(new Move(new Square(c, r), new Square(c-1, r+1), board, true));
                 }
@@ -155,7 +155,7 @@ public class GameState {
                 if (board[r + 1][c + 1].charAt(0) == 'w') { // Capturing right
                     moves.add(new Move(new Square(c, r), new Square(c + 1, r + 1), board));
                 }
-                else if (new Square(c + 1, r + 1).equals(this.enpassantPossible)) {  // Enpassant capture right
+                else if (new Square(c + 1, r + 1).equals(this.enpassantPossible) && board[r][c+1].charAt(0) == 'w') {  // Enpassant capture right
                     System.out.printf("Adding en passant move: from (%d,%d) to (%d,%d)%n", c, r, c+1, r+1);
                     moves.add(new Move(new Square(c, r), new Square(c + 1, r + 1), board, true));
                 }
