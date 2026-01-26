@@ -1,6 +1,8 @@
 package com.edwardhicks.chess;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static java.lang.Math.abs;
@@ -9,9 +11,11 @@ public class GameState {
     private final String[][] board;
     public boolean whiteToMove;
     private final List<Move> moveLog;
+    private final List<CastleRights> castleRightsLog;
     private Square whiteKingLocation;
     private Square blackKingLocation;
     private Square enpassantPossible;
+    private final CastleRights currentCastleRights;
 
     public GameState() {
 
@@ -31,7 +35,10 @@ public class GameState {
         this.blackKingLocation = new Square(4, 0);  // (col, row)
         this.enpassantPossible = null;
 
-        this.moveLog = new ArrayList<>();
+        this.moveLog = new ArrayList<Move>();
+
+        this.currentCastleRights = new CastleRights(true, true, true, true);
+        this.castleRightsLog = new ArrayList<CastleRights>(Collections.singleton(this.currentCastleRights));
     }
 
     /**
@@ -41,13 +48,17 @@ public class GameState {
     public void makeMove(Move move) {
         board[move.start().row()][move.start().col()] = "--";
         board[move.end().row()][move.end().col()] = move.pieceMoved();
+        moveLog.add(move);
+
+        // update king's location
+        if (move.pieceMoved().equals("wK")) {
+            this.whiteKingLocation = new Square(move.end().col(), move.end().row());
+        } else if (move.pieceMoved().equals("bK")) {
+            this.blackKingLocation = new Square(move.end().col(), move.end().row());
+        }
 
         if (move.isPawnPromotion()) {
             board[move.end().row()][move.end().col()] = "" + move.pieceMoved().charAt(0) + 'Q';
-        }
-
-        if (move.isEnpassantMove()) {
-            board[move.start().row()][move.end().col()] = "--";
         }
 
         if (move.pieceMoved().charAt(1) == 'p' && abs(move.start().row() - move.end().row()) == 2) {  // if a pawn moves 2 squares
@@ -55,7 +66,24 @@ public class GameState {
             System.out.println("enpassant possible: " + this.enpassantPossible);
         }
 
-        moveLog.add(move);
+        if (move.isEnpassantMove()) {
+            board[move.start().row()][move.end().col()] = "--";
+        }
+
+        if (move.isCastleMove()) {
+            if (move.end().col() - move.start().col() == 2) { // kingside
+                board[move.end().row()][move.end().col() - 1] = board[move.end().row()][move.end().col() + 1];  // copy the rook to the new square
+                board[move.end().row()][move.end().col() + 1] = "--";  // remove the old rook
+            } else
+            if (move.end().col() - move.start().col() == -2) {  // queenside
+                board[move.end().row()][move.end().col() + 1] = board[move.end().row()][move.end().col() - 2];  // copy the rook to the new square
+                board[move.end().row()][move.end().col() - 2] = "--";  // remove the old rook
+            }
+        }
+
+        updateCastleRights(move);
+        this.castleRightsLog.add(new CastleRights(currentCastleRights.wks, currentCastleRights.bks, currentCastleRights.wqs, currentCastleRights.bqs));
+
         whiteToMove = !whiteToMove; // Swap turns
 
         System.out.println("Move executed: " + move.pieceMoved() + " to " + move.end().col() + "," + move.end().row());
@@ -73,8 +101,19 @@ public class GameState {
      * Returns all moves considering checks (the 'legal' moves).
      */
     public ArrayList<Move> getValidMoves() {
+
+        ArrayList<Move> moves = getAllPossibleMoves();
+
+        // generate castle moves
+        if (whiteToMove) {
+            System.out.println("Getting castle moves");
+            getCastleMoves(whiteKingLocation.row(), whiteKingLocation.col(), moves);
+        } else {
+            getCastleMoves(blackKingLocation.row(), blackKingLocation.col(), moves);
+        }
+
         System.out.println("Getting all valid moves");
-        return getAllPossibleMoves(); // Simplified for now
+        return moves; // Simplified for now
     }
 
     /**
@@ -103,6 +142,91 @@ public class GameState {
         return moves;
     }
 
+    public boolean squareUnderAttack(int r, int c) {
+        whiteToMove =! whiteToMove;
+        ArrayList<Move> oppMoves = getAllPossibleMoves();
+        whiteToMove =! whiteToMove;
+        for (Move oppMove : oppMoves) {
+            if (oppMove.end().row() == r && oppMove.end().col() == c) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void updateCastleRights(Move move) {
+    // Check if the king moved or the rook moved
+    if (move.pieceMoved().equals("wK")) {
+        this.currentCastleRights.wks = false;
+        this.currentCastleRights.wqs = false;
+    } else if (move.pieceMoved().equals("bK")) {
+        this.currentCastleRights.bks = false;
+        this.currentCastleRights.bqs = false;
+    } else if (move.pieceMoved().equals("wR")) {
+        if (move.start().row() == 7) {
+            if (move.start().col() == 0) {  // White's left rook
+                this.currentCastleRights.wqs = false;
+            }
+            if (move.start().col() == 7) {  // White's right rook
+                this.currentCastleRights.wks = false;
+            }
+        }
+    } else if (move.pieceMoved().equals("bR")) {
+        if (move.start().row() == 0) {
+            if (move.start().col() == 0) {  // Black's left rook
+                this.currentCastleRights.bqs = false;
+            }
+            if (move.start().col() == 7) {  // Black's right rook
+                this.currentCastleRights.bks = false;
+            }
+        }
+    }
+
+    // Check if a rook is captured
+    if (move.pieceCaptured().equals("wR")) {
+        if (move.end().row() == 7) {
+            if (move.end().col() == 0) {
+                this.currentCastleRights.wqs = false;
+            } else if (move.end().col() == 7) {
+                this.currentCastleRights.wks = false;
+            }
+        }
+    } else if (move.pieceCaptured().equals("bR")) {
+        if (move.end().row() == 0) {
+            if (move.end().col() == 0) {
+                this.currentCastleRights.bqs = false;
+            } else if (move.end().col() == 7) {
+                this.currentCastleRights.bks = false;
+                }
+            }
+        }
+    }
+
+    public void getCastleMoves(int r, int c, List<Move> moves) {
+        if (squareUnderAttack(r, c)) { return; }  // King can't escape check by castling.
+        if ((whiteToMove && currentCastleRights.wks) || (!whiteToMove && currentCastleRights.bks)) {
+            getKingSideCastleMoves(r, c, moves);
+        }
+        if ((whiteToMove && currentCastleRights.wqs) || (!whiteToMove && currentCastleRights.bqs)) {
+            getQueenSideCastleMoves(r, c, moves);
+        }
+    }
+
+    public void getKingSideCastleMoves(int r, int c, List<Move> moves) {
+        if (board[r][c + 1].equals("--") && board[r][c + 2].equals("--")) {
+            if (!squareUnderAttack(r, c + 1) && !squareUnderAttack(r, c + 2)) {
+                moves.add(Move.castleMove(new Square(c, r), new Square(c + 2, r), board));
+            }
+        }
+    }
+    public void getQueenSideCastleMoves(int r, int c, List<Move> moves) {
+        if (board[r][c-1].equals("--") && board[r][c-2].equals("--") && board[r][c-3].equals("--")) {
+            if (!squareUnderAttack(r, c-1) && !squareUnderAttack(r, c-2)) {
+                moves.add(Move.castleMove(new Square(c, r), new Square(c-2, r), board));
+            }
+        }
+    }
+
     public void getPawnMoves(int r, int c, List<Move> moves) {
         if (whiteToMove) { // White pawn logic
             // Forward moves
@@ -119,7 +243,7 @@ public class GameState {
                 }
                 else if (new Square(c - 1, r - 1).equals(this.enpassantPossible)  && board[r][c-1].charAt(0) == 'b') {  // Enpassant capture left
                     System.out.printf("Adding en passant move: from (%d,%d) to (%d,%d)%n", c, r, c-1, r-1);
-                    moves.add(new Move(new Square(c, r), new Square(c-1, r-1), board, true));
+                    moves.add(Move.enpassantMove(new Square(c, r), new Square(c-1, r-1), board));
                 }
             }
             // Capturing right
@@ -129,7 +253,7 @@ public class GameState {
                 }
                 else if (new Square(c + 1, r - 1).equals(this.enpassantPossible) && board[r][c+1].charAt(0) == 'b') {  // Enpassant capture right
                     System.out.printf("Adding en passant move: from (%d,%d) to (%d,%d)%n", c, r, c+1, r-1);
-                    moves.add(new Move(new Square(c, r), new Square(c + 1, r - 1), board, true));
+                    moves.add(Move.enpassantMove(new Square(c, r), new Square(c + 1, r - 1), board));
                 }
             }
         } else { // Black pawn logic
@@ -147,7 +271,7 @@ public class GameState {
                 }
                 else if (new Square(c - 1, r + 1).equals(this.enpassantPossible) && board[r][c-1].charAt(0) == 'w') {  // Enpassant capture left
                     System.out.printf("Adding en passant move: from (%d,%d) to (%d,%d)%n", c, r, c-1, r+1);
-                    moves.add(new Move(new Square(c, r), new Square(c-1, r+1), board, true));
+                    moves.add(Move.enpassantMove(new Square(c, r), new Square(c-1, r+1), board));
                 }
             }
             // Capturing right
@@ -157,7 +281,7 @@ public class GameState {
                 }
                 else if (new Square(c + 1, r + 1).equals(this.enpassantPossible) && board[r][c+1].charAt(0) == 'w') {  // Enpassant capture right
                     System.out.printf("Adding en passant move: from (%d,%d) to (%d,%d)%n", c, r, c+1, r+1);
-                    moves.add(new Move(new Square(c, r), new Square(c + 1, r + 1), board, true));
+                    moves.add(Move.enpassantMove(new Square(c, r), new Square(c + 1, r + 1), board));
                 }
             }
         }
