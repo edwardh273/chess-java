@@ -4,11 +4,16 @@ import com.edwardhicks.chess.Square;
 
 import java.util.Objects;
 
-public record Move(Square start, Square end, String pieceMoved, String pieceCaptured) {
+public record Move(Square start, Square end, String pieceMoved, String pieceCaptured, boolean isEnpassantMove) {
 
     // Convenience constructor
     public Move(Square start, Square end, String[][] board) {
-        this(start, end, board[start.row()][start.col()], board[end.row()][end.col()]);
+        this(start, end, board[start.row()][start.col()], board[end.row()][end.col()], false);
+    }
+    
+    // Convenience constructor
+    public Move(Square start, Square end, String[][] board, boolean isEnpassantMove) {
+        this(start, end, board[start.row()][start.col()], board[end.row()][end.col()], isEnpassantMove);
     }
 
     // Computed property

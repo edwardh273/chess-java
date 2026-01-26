@@ -3,12 +3,15 @@ package com.edwardhicks.chess;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.lang.Math.abs;
+
 public class GameState {
     private final String[][] board;
-    private boolean whiteToMove;
+    public boolean whiteToMove;
     private final List<Move> moveLog;
     private Square whiteKingLocation;
     private Square blackKingLocation;
+    private Square enpassantPossible;
 
     public GameState() {
 
@@ -26,6 +29,7 @@ public class GameState {
         this.whiteToMove = true;
         this.whiteKingLocation = new Square(4, 7);  // (col, row)
         this.blackKingLocation = new Square(4, 0);  // (col, row)
+        this.enpassantPossible = null;
 
         this.moveLog = new ArrayList<>();
     }
@@ -40,6 +44,15 @@ public class GameState {
 
         if (move.isPawnPromotion()) {
             board[move.end().row()][move.end().col()] = "" + move.pieceMoved().charAt(0) + 'Q';
+        }
+
+        if (move.isEnpassantMove()) {
+            board[move.start().row()][move.end().col()] = "--";
+        }
+
+        if (move.pieceMoved().charAt(1) == 'p' && abs(move.start().row() - move.end().row()) == 2) {  // if a pawn moves 2 squares
+            this.enpassantPossible = new Square(move.start().col(), (move.start().row() + move.end().row()) / 2 );  // enpassant possible to the square where the pawn would have moved if it had only moved 1 square.
+            System.out.println("enpassant possible: " + this.enpassantPossible);
         }
 
         moveLog.add(move);
@@ -99,12 +112,25 @@ public class GameState {
                     moves.add(new Move(new Square(c, r), new Square(c, r - 2), board));
                 }
             }
-            // Captures
-            if (c - 1 >= 0 && board[r - 1][c - 1].charAt(0) == 'b') {
+            // Capturing left
+            if (c - 1 >= 0 ) {
+                if (board[r - 1][c - 1].charAt(0) == 'b') { // Capturing left
                 moves.add(new Move(new Square(c, r), new Square(c - 1, r - 1), board));
+                }
+                else if (new Square(c - 1, r - 1).equals(this.enpassantPossible)) {  // Enpassant capture left
+                    System.out.printf("Adding en passant move: from (%d,%d) to (%d,%d)%n", c, r, c-1, r-1);
+                    moves.add(new Move(new Square(c, r), new Square(c-1, r-1), board, true));
+                }
             }
-            if (c + 1 <= 7 && board[r - 1][c + 1].charAt(0) == 'b') {
-                moves.add(new Move(new Square(c, r), new Square(c + 1, r - 1), board));
+            // Capturing right
+            if (c + 1 <= 7) {
+                if (board[r - 1][c + 1].charAt(0) == 'b') { // Capturing right
+                    moves.add(new Move(new Square(c, r), new Square(c + 1, r - 1), board));
+                }
+                else if (new Square(c + 1, r - 1).equals(this.enpassantPossible)) {  // Enpassant capture right
+                    System.out.printf("Adding en passant move: from (%d,%d) to (%d,%d)%n", c, r, c+1, r-1);
+                    moves.add(new Move(new Square(c, r), new Square(c + 1, r - 1), board, true));
+                }
             }
         } else { // Black pawn logic
             // Forward moves
@@ -114,12 +140,25 @@ public class GameState {
                     moves.add(new Move(new Square(c, r), new Square(c, r + 2), board));
                 }
             }
-            // Captures
-            if (c - 1 >= 0 && board[r + 1][c - 1].charAt(0) == 'w') {
+            // Capturing left
+            if (c - 1 >= 0 ) {
+                if (board[r + 1][c - 1].charAt(0) == 'w') { // Capturing left
                 moves.add(new Move(new Square(c, r), new Square(c - 1, r + 1), board));
+                }
+                else if (new Square(c - 1, r + 1).equals(this.enpassantPossible)) {  // Enpassant capture left
+                    System.out.printf("Adding en passant move: from (%d,%d) to (%d,%d)%n", c, r, c-1, r+1);
+                    moves.add(new Move(new Square(c, r), new Square(c-1, r+1), board, true));
+                }
             }
-            if (c + 1 <= 7 && board[r + 1][c + 1].charAt(0) == 'w') {
-                moves.add(new Move(new Square(c, r), new Square(c + 1, r + 1), board));
+            // Capturing right
+            if (c + 1 <= 7) {
+                if (board[r + 1][c + 1].charAt(0) == 'w') { // Capturing right
+                    moves.add(new Move(new Square(c, r), new Square(c + 1, r + 1), board));
+                }
+                else if (new Square(c + 1, r + 1).equals(this.enpassantPossible)) {  // Enpassant capture right
+                    System.out.printf("Adding en passant move: from (%d,%d) to (%d,%d)%n", c, r, c+1, r+1);
+                    moves.add(new Move(new Square(c, r), new Square(c + 1, r + 1), board, true));
+                }
             }
         }
     }
