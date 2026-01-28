@@ -68,6 +68,8 @@ public class GameState {
         if (move.pieceMoved().charAt(1) == 'p' && abs(move.start().row() - move.end().row()) == 2) {  // if a pawn moves 2 squares
             this.enpassantPossible = new Square(move.start().col(), (move.start().row() + move.end().row()) / 2 );  // enpassant possible to the square where the pawn would have moved if it had only moved 1 square.
             System.out.println("enpassant possible: " + this.enpassantPossible);
+        } else {
+            this.enpassantPossible = null;
         }
 
         if (move.isEnpassantMove()) {
