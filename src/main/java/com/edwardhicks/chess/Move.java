@@ -13,7 +13,9 @@ public record Move(Square start, Square end, String pieceMoved, String pieceCapt
     
     // Convenience constructor
     public static Move enpassantMove(Square start, Square end, String[][] board) {
-        return new Move(start, end, board[start.row()][start.col()], board[end.row()][end.col()], true, false);
+        String pieceCaptured = board[start.row()][start.col()].equals("wp") ? "bp" : "wp";
+
+        return new Move(start, end, board[start.row()][start.col()], pieceCaptured, true, false);
     }
 
     public static Move castleMove(Square start, Square end, String[][] board) {

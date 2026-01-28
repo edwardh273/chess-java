@@ -10,12 +10,14 @@ import static java.lang.Math.abs;
 public class GameState {
     private final String[][] board;
     public boolean whiteToMove;
-    private final List<Move> moveLog;
+    public final List<Move> moveLog;
     private final List<CastleRights> castleRightsLog;
     private Square whiteKingLocation;
     private Square blackKingLocation;
     private Square enpassantPossible;
-    private final CastleRights currentCastleRights;
+    private CastleRights currentCastleRights;
+    private boolean checkMate;
+    private boolean staleMate;
 
     public GameState() {
 
@@ -34,6 +36,8 @@ public class GameState {
         this.whiteKingLocation = new Square(4, 7);  // (col, row)
         this.blackKingLocation = new Square(4, 0);  // (col, row)
         this.enpassantPossible = null;
+        this.checkMate = false;
+        this.staleMate = false;
 
         this.moveLog = new ArrayList<Move>();
 
@@ -101,19 +105,102 @@ public class GameState {
      * Returns all moves considering checks (the 'legal' moves).
      */
     public ArrayList<Move> getValidMoves() {
+        System.out.println("Getting all valid moves");
+
+        CastleRights tmpCastleRights = new CastleRights(currentCastleRights.wks, currentCastleRights.bks, currentCastleRights.wqs, currentCastleRights.bqs);
+        Square tmpEnpassantPossible = enpassantPossible;
 
         ArrayList<Move> moves = getAllPossibleMoves();
 
         // generate castle moves
         if (whiteToMove) {
-            System.out.println("Getting castle moves");
             getCastleMoves(whiteKingLocation.row(), whiteKingLocation.col(), moves);
         } else {
             getCastleMoves(blackKingLocation.row(), blackKingLocation.col(), moves);
         }
 
-        System.out.println("Getting all valid moves");
-        return moves; // Simplified for now
+        // Remove moves that leave you in check
+        for (int i = moves.size() - 1; i >= 0; i--) {  // When removing from a list, go backwards through that list
+            makeMove(moves.get(i));  // Make move, switch to opponent's perspective
+            whiteToMove = !whiteToMove;  // Flip back to current player's perspective for inCheck function
+            if (inCheck()) {
+                moves.remove(i);  // If in check, remove that move from all possible moves
+            }
+            whiteToMove = !whiteToMove;  // Back to opponent's perspective
+            undoMove();  // Undo the move
+        }
+
+        if (moves.isEmpty()) {  // Either checkmate or stalemate
+            if (inCheck()) {
+                checkMate = true;
+                System.out.println("Checkmate");
+            } else {
+                staleMate = true;
+                System.out.println("Stalemate");
+            }
+        } else {
+            checkMate = false;
+            staleMate = false;
+        }
+
+        currentCastleRights = tmpCastleRights;
+        enpassantPossible = tmpEnpassantPossible;
+
+
+        return moves;
+    }
+
+    /**
+     * Undo the last move made
+     */
+    public void undoMove() {
+        if (!moveLog.isEmpty()) {  // Make sure that there is a move to undo
+            Move move = moveLog.remove(moveLog.size() - 1);  // Pop last move
+            board[move.start().row()][move.start().col()] = move.pieceMoved();
+            board[move.end().row()][move.end().col()] = move.pieceCaptured();
+
+            // Update king's location
+            if (move.pieceMoved().equals("wK")) {
+                whiteKingLocation = new Square(move.start().col(), move.start().row());
+            } else if (move.pieceMoved().equals("bK")) {
+                blackKingLocation = new Square(move.start().col(), move.start().row());
+            }
+
+            whiteToMove = !whiteToMove;  // Swap players back
+
+            // Undo en passant
+            if (move.isEnpassantMove()) {
+                board[move.end().row()][move.end().col()] = "--";  // Leave landing square blank
+                board[move.start().row()][move.end().col()] = move.pieceCaptured();
+                enpassantPossible = new Square(move.end().col(), move.end().row());
+            }
+
+            // Undo a 2 square pawn advance
+            if (move.pieceMoved().charAt(1) == 'p' &&
+                Math.abs(move.start().row() - move.end().row()) == 2) {
+                enpassantPossible = null;
+            }
+
+            // Undo castle move
+            if (move.isCastleMove()) {
+                if (move.end().col() - move.start().col() == 2) {  // Kingside
+                    board[move.end().row()][move.end().col() + 1] = board[move.end().row()][move.end().col() - 1];
+                    board[move.end().row()][move.end().col() - 1] = "--";  // Remove the old rook
+                } else if (move.end().col() - move.start().col() == -2) {  // Queenside
+                    board[move.end().row()][move.end().col() - 2] = board[move.end().row()][move.end().col() + 1];
+                    board[move.end().row()][move.end().col() + 1] = "--";  // Remove the old rook
+                }
+            }
+
+            // Undo castling rights
+            castleRightsLog.removeLast();  // Get rid of castle rights from move we are undoing
+            CastleRights lastCastleRights = castleRightsLog.getLast();
+            currentCastleRights = new CastleRights(lastCastleRights.wks, lastCastleRights.bks, lastCastleRights.wqs, lastCastleRights.bqs);
+
+            checkMate = false;
+            staleMate = false;
+
+        }
     }
 
     /**
@@ -152,6 +239,14 @@ public class GameState {
             }
         }
         return false;
+    }
+
+    public boolean inCheck() {
+        if (whiteToMove) {
+            return squareUnderAttack(this.whiteKingLocation.row(), this.whiteKingLocation.col());
+        } else {
+            return squareUnderAttack(this.blackKingLocation.row(), blackKingLocation.col());
+        }
     }
 
     public void updateCastleRights(Move move) {
