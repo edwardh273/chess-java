@@ -23,6 +23,8 @@ public class BoardPanel extends JPanel {
     private final ArrayList<Square> playerClicks = new ArrayList<>();
     private ArrayList<Move> validMoves = new ArrayList<>();
 
+    private boolean gameOver = false;
+
 
 
     // Constructor, runs when I crate a new BoardPanel
@@ -35,6 +37,9 @@ public class BoardPanel extends JPanel {
         addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
+                if (gameOver) {
+                    return;
+                }
                 int col = e.getX() / SQ_SIZE;
                 int row = e.getY() / SQ_SIZE;
 
@@ -63,6 +68,9 @@ public class BoardPanel extends JPanel {
                         if (moveAttempt.equals(move)) {
                             gameState.makeMove(move);
                             validMoves = gameState.getValidMoves();
+                            if (validMoves.isEmpty()) {
+                                gameOver = true;
+                            }
                             break;
                         }
                     }
@@ -82,6 +90,7 @@ public class BoardPanel extends JPanel {
                     System.out.println("Undone move");
 
                     validMoves = gameState.getValidMoves();
+                    gameOver = false;
                     repaint();  // Refresh the board display
                 }
             }
@@ -101,6 +110,15 @@ public class BoardPanel extends JPanel {
         if (!playerClicks.isEmpty()) {
             highlightSquares(g, gameState, validMoves, playerClicks.getFirst());
         }
+
+        if (gameOver && gameState.inCheck() && gameState.whiteToMove) {
+            drawText(g, "Black wins by checkmate");
+        } else if (gameOver && gameState.inCheck() && !gameState.whiteToMove) {
+            drawText(g, "White wins by checkmate");
+        } else if (gameOver) {
+            drawText(g, "Stalemate");
+        }
+
     }
 
     private void drawBoard(Graphics g) {
@@ -127,10 +145,35 @@ public class BoardPanel extends JPanel {
         }
     }
 
+    private void drawText(Graphics g, String text) {
+        Graphics2D g2d = (Graphics2D) g;
+
+        // Enable anti-aliasing for smooth text
+        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+                             RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+
+        Font font = new Font("Arial", Font.BOLD, 32);
+        g2d.setFont(font);
+
+        // Get text dimensions for centering
+        FontMetrics metrics = g2d.getFontMetrics(font);
+        int x = (BOARD_LENGTH - metrics.stringWidth(text)) / 2;
+        int y = BOARD_LENGTH / 2;
+
+        // Draw shadow/outline for better visibility
+        g2d.setColor(Color.BLACK);
+        g2d.drawString(text, x + 2, y + 2);
+
+        // Draw main text
+        g2d.setColor(Color.BLACK);
+        g2d.drawString(text, x, y);
+    }
+
+
     /**
      * Highlight square selected and available moves.
      */
-    public void highlightSquares(Graphics g, GameState gs, ArrayList<Move> validMoves, Square sqSelected) {
+    private void highlightSquares(Graphics g, GameState gs, ArrayList<Move> validMoves, Square sqSelected) {
         if (sqSelected != null) {
             int c = sqSelected.col();
             int r = sqSelected.row();

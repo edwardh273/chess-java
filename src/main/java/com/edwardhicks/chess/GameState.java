@@ -17,8 +17,8 @@ public class GameState {
     private Square blackKingLocation;
     private Square enPassantPossible;
     private CastleRights currentCastleRights;
-    private boolean checkMate;
-    private boolean staleMate;
+    public boolean checkMate;
+    public boolean staleMate;
 
     public GameState() {
 
@@ -46,6 +46,9 @@ public class GameState {
 
         this.enPassantPossible = null;
         this.enPassantLog = new ArrayList<Square>(Collections.singleton(this.enPassantPossible));
+
+        this.checkMate = false;
+        this.staleMate = false;
     }
 
     /**
