@@ -20,7 +20,6 @@ public class BoardPanel extends JPanel {
 
     private final GameState gameState;
 
-    // TODO: should the below be a fixed Array?
     private final ArrayList<Square> playerClicks = new ArrayList<>();
     private ArrayList<Move> validMoves = new ArrayList<>();
 
@@ -140,6 +139,14 @@ public class BoardPanel extends JPanel {
 
         // Make the move
         gameState.makeMove(move);
+        System.out.println("Move executed: " + move.pieceMoved() + " to " + move.end().col() + "," + move.end().row());
+        System.out.println();
+
+        if (gameState.whiteToMove) {
+            System.out.println("White to move");
+        } else {
+            System.out.println("Black to move");
+        }
 
         // update board graphics immediately.
         paintImmediately(getBounds());

@@ -80,8 +80,7 @@ public class ChessAI {
         long endTime = System.currentTimeMillis();
         double timeTaken = (endTime - startTime) / 1000.0;
 
-        System.out.printf("movesSearched: %d     maxScore: %.3f     Time: %.2f%n",
-                         counter, bestScore, timeTaken);
+        System.out.printf("movesSearched: %d     maxScore: %.3f     Time: %.2f%n", counter, bestScore, timeTaken);
 
         return nextMove;
     }
@@ -157,7 +156,8 @@ public class ChessAI {
                 maxScore = score;
                 if ((depth == WHITE_DEPTH && whiteAI) || (depth == BLACK_DEPTH && !whiteAI)) {
                     nextMove = move;
-                    System.out.printf("%d %.3f%n", move.getMoveID(), maxScore);
+                    String printString = String.format("C%dR%d -> C%dR%d", move.start().col(), move.start().row(), move.end().col(), move.end().row());
+                    System.out.printf("%s %.3f%n", printString, maxScore);
                 }
             }
 

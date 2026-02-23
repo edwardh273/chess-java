@@ -80,7 +80,6 @@ public class GameState {
 
         if (move.pieceMoved().charAt(1) == 'p' && abs(move.start().row() - move.end().row()) == 2) {  // if a pawn moves 2 squares
             this.enPassantPossible = new Square(move.start().col(), (move.start().row() + move.end().row()) / 2 );  // enpassant possible to the square where the pawn would have moved if it had only moved 1 square.
-            System.out.println("enpassant possible: " + this.enPassantPossible);
         } else {
             this.enPassantPossible = null;
         }
@@ -107,14 +106,7 @@ public class GameState {
 
         whiteToMove = !whiteToMove; // Swap turns
 
-        System.out.println("Move executed: " + move.pieceMoved() + " to " + move.end().col() + "," + move.end().row());
-        System.out.println();
 
-        if (whiteToMove) {
-            System.out.println("White to move");
-        } else {
-            System.out.println("Black to move");
-        }
     }
 
 
@@ -505,7 +497,6 @@ public class GameState {
                     }
                 } else if (new Square(c - 1, r - 1).equals(this.enPassantPossible) && board[r][c - 1].charAt(0) == 'b') {  // Enpassant capture left
                     if (!piecePinned || Arrays.equals(pinDirection, new int[]{-1, -1})) {
-                        System.out.printf("Adding en passant move: from (%d,%d) to (%d,%d)%n", c, r, c - 1, r - 1);
                         moves.add(Move.enpassantMove(new Square(c, r), new Square(c - 1, r - 1), board));
                     }
                 }
@@ -518,7 +509,6 @@ public class GameState {
                     }
                 } else if (new Square(c + 1, r - 1).equals(this.enPassantPossible) && board[r][c + 1].charAt(0) == 'b') {  // Enpassant capture right
                     if (!piecePinned || Arrays.equals(pinDirection, new int[]{1, -1})) {
-                        System.out.printf("Adding en passant move: from (%d,%d) to (%d,%d)%n", c, r, c + 1, r - 1);
                         moves.add(Move.enpassantMove(new Square(c, r), new Square(c + 1, r - 1), board));
                     }
                 }
@@ -542,7 +532,6 @@ public class GameState {
                     }
                 } else if (new Square(c - 1, r + 1).equals(this.enPassantPossible) && board[r][c - 1].charAt(0) == 'w') {  // Enpassant capture left
                     if (!piecePinned || Arrays.equals(pinDirection, new int[]{-1, 1})) {
-                        System.out.printf("Adding en passant move: from (%d,%d) to (%d,%d)%n", c, r, c - 1, r + 1);
                         moves.add(Move.enpassantMove(new Square(c, r), new Square(c - 1, r + 1), board));
                     }
                 }
@@ -555,7 +544,6 @@ public class GameState {
                     }
                 } else if (new Square(c + 1, r + 1).equals(this.enPassantPossible) && board[r][c + 1].charAt(0) == 'w') {  // Enpassant capture right
                     if (!piecePinned || Arrays.equals(pinDirection, new int[]{1, 1})) {
-                        System.out.printf("Adding en passant move: from (%d,%d) to (%d,%d)%n", c, r, c + 1, r + 1);
                         moves.add(Move.enpassantMove(new Square(c, r), new Square(c + 1, r + 1), board));
                     }
                 }
