@@ -746,6 +746,18 @@ public class GameState {
         }
     }
 
+    public boolean isCheckMate() {
+        return checkMate;
+    }
+
+    public boolean isStaleMate() {
+        return staleMate;
+    }
+
+    public boolean isWhiteToMove() {
+        return whiteToMove;
+    }
+
     public String[][] getBoard() {
         return board;
     }

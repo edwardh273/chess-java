@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import com.edwardhicks.chess.Move;
 import com.edwardhicks.chess.Square;
 import com.edwardhicks.chess.GameState;
+import com.edwardhicks.chess.ai.ChessAI;
 
 import static com.edwardhicks.chess.Constants.*;
 import static com.edwardhicks.chess.ui.ImageLoader.getPieceImage;
@@ -24,27 +25,53 @@ public class BoardPanel extends JPanel {
     private ArrayList<Move> validMoves = new ArrayList<>();
 
     private boolean gameOver = false;
+    private boolean whitePlayer = false;
+    private boolean blackPlayer = false;
+    private boolean humanTurn;
+    private final ChessAI ai;
 
 
 
-    // Constructor, runs when I crate a new BoardPanel
+
+    // Constructor, runs when I create a new BoardPanel
     public BoardPanel(GameState gs) {
         this.gameState = gs;
+        this.ai = new ChessAI();
         setPreferredSize(new Dimension(BOARD_LENGTH, BOARD_LENGTH));
 
+        // set humanTurn
+        updateTurn();
         validMoves = gameState.getValidMoves();
+
+
+        // if AI vs AI, need to free up Event Dispatch Thread to allow graphics to fire periodically.
+        if (!whitePlayer && !blackPlayer) {
+            Timer aiTimer = new Timer(500, null); // 500ms delay between moves
+
+            aiTimer.addActionListener(e -> {
+                if (!gameOver) {
+                    makeAIMove();
+                    repaint();
+                } else {
+                    ((Timer) e.getSource()).stop();
+                }
+            });
+
+            aiTimer.start();
+        }
+
 
         addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                if (gameOver) {
+                if (gameOver || !humanTurn) {
                     return;
                 }
+
                 int col = e.getX() / SQ_SIZE;
                 int row = e.getY() / SQ_SIZE;
 
                 System.out.println("Clicked: " + col + ", " + row);
-                // piece selected
                 Square sqSelected = new Square(col, row);
 
                 if (playerClicks.size() == 1 && playerClicks.get(0).col() == col && playerClicks.get(0).row() == row) {
@@ -64,20 +91,23 @@ public class BoardPanel extends JPanel {
 
                     Move moveAttempt = new Move(start, end, gameState.getBoard());
 
+                    // This is where I actually make the move
                     for (Move move : validMoves) {
                         if (moveAttempt.equals(move)) {
-                            gameState.makeMove(move);
-                            validMoves = gameState.getValidMoves();
-                            if (validMoves.isEmpty()) {
-                                gameOver = true;
-                            }
+
+                            // execute player move, update turn
+                            executeMove(move);
                             break;
                         }
                     }
-
                     playerClicks.clear();
-                    repaint();
                 }
+
+                if (!humanTurn && !gameOver) {
+                    makeAIMove();
+                }
+
+
             }
         });
 
@@ -100,6 +130,54 @@ public class BoardPanel extends JPanel {
         setFocusable(true);
         requestFocusInWindow();
     }
+
+
+    /**
+     * Execute a move and update the game state
+     * @param move The move to execute
+     */
+    private void executeMove(Move move) {
+
+        // Make the move
+        gameState.makeMove(move);
+
+        // update board graphics immediately.
+        paintImmediately(getBounds());
+        updateTurn();
+
+        // Update valid moves for next turn
+        validMoves = gameState.getValidMoves();
+
+        // Check for game over
+        if (validMoves.isEmpty()) {
+            gameOver = true;
+        }
+    }
+
+    /**
+     * Update whose turn it is and trigger AI move if needed
+     */
+    private void updateTurn() {
+        humanTurn = (gameState.isWhiteToMove() && whitePlayer) || (!gameState.isWhiteToMove() && blackPlayer);
+    }
+
+    /**
+     * Make the AI move
+     */
+    private void makeAIMove() {
+        Move aiMove = ai.findBestMove(gameState, validMoves);
+
+        if (aiMove != null) {
+            executeMove(aiMove);
+        } else {
+            // Fallback to random move
+            Move randomMove = ChessAI.findRandomMove(validMoves);
+            if (randomMove != null) {
+                executeMove(randomMove);
+            }
+        }
+    }
+
 
     @Override  // replaces JPanel's default paintComponent
     protected void paintComponent(Graphics g) {

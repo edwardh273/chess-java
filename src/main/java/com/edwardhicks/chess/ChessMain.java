@@ -4,6 +4,7 @@ import javax.swing.*;
 import com.edwardhicks.chess.ui.BoardPanel;
 
 
+
 public class ChessMain extends JFrame {
 
     public ChessMain() {
